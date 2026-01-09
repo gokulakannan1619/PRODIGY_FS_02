@@ -1,19 +1,31 @@
 from flask import Flask
-from config import Config
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager
 from models import db
 from auth import auth
-from flask_jwt_extended import JWTManager
-from flask_cors import CORS
+from employees import employees_bp
 
 app = Flask(__name__)
-app.config.from_object(Config)
 
+# ---------- CONFIG ----------
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    "mysql+pymysql://root:Gokul%401619@localhost/auth_db"
+)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["JWT_SECRET_KEY"] = "super-secret-key"
+
+# ---------- INIT ----------
 db.init_app(app)
-jwt = JWTManager(app)
-CORS(app)
+JWTManager(app)
 
+# ✅ CORS FIX (IMPORTANT)
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
+
+# ---------- BLUEPRINTS ----------
 app.register_blueprint(auth, url_prefix="/api")
+app.register_blueprint(employees_bp, url_prefix="/api")
 
+# ---------- CREATE TABLES ----------
 with app.app_context():
     db.create_all()
 
